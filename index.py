@@ -1,6 +1,7 @@
 
 from email.policy import default
 from os import error, write
+from termios import TIOCM_LE
 from xml.etree.ElementInclude import include
 from numpy import empty
 import streamlit as st
@@ -14,10 +15,10 @@ import base64
 import mysql.connector
 import functions
 
-theme=base="light"
-primaryColor="#040404"
-secondaryBackgroundColor="#43aab5"
-textColor="#0e0e0e"
+#.streamlit/config.toml
+#primaryColor="#040404"
+#secondaryBackgroundColor="#43aab5"
+#textColor="#0e0e0e"
 
 
 #streamlit/config.toml
@@ -104,6 +105,7 @@ def main():
                             col11 = st.columns(3)
                             col12=st.columns(3)
                             col13=st.columns(3)
+                            hospitalname=st.text_input("Hospital Name")
                             with col11[0]:
                                 plotno = st.text_input('Plot no', max_chars=30)
                             with col11[1]:
@@ -122,7 +124,7 @@ def main():
                                 phone = st.number_input('Phone no', min_value=999999999, max_value=9999999999)
                             with col13[2]:
                                 adminPhone = st.number_input('Administration phone No', min_value=999999999, max_value=9999999999)
-                            functions.dma("Add","x",'add_hospital', (plotno,street,city,state,zipcode,speciality,ecc_hotline,phone,adminPhone, "A",0, 0))
+                            functions.dma("Add","x",'add_hospital', (hospitalname,plotno,street,city,state,zipcode,speciality,ecc_hotline,phone,adminPhone, "A",0, 0))
                        
                         if chose=="Modify/Delete":
                             hospitallist=functions.searchid('hospital','hid')
@@ -133,6 +135,7 @@ def main():
                                     col11 = st.columns(3)
                                     col12=st.columns(3)
                                     col13=st.columns(3)
+                                    hospitalname=st.text_input("Hospital Name")
                                     with col11[0]:
                                         plotno = st.text_input('Plot no', max_chars=30)
                                     with col11[1]:
@@ -151,7 +154,7 @@ def main():
                                         phone = st.number_input('Phone no', min_value=999999999, max_value=9999999999)
                                     with col13[2]:
                                         adminPhone = st.number_input('Administration phone No', min_value=999999999, max_value=9999999999)
-                                    functions.dma("Modify","x",'add_hospital', (plotno,street,city,state,zipcode,speciality,ecc_hotline,phone,adminPhone, "M",int(searchhospital), 0))
+                                    functions.dma("Modify","x",'add_hospital', (hospitalname,plotno,street,city,state,zipcode,speciality,ecc_hotline,phone,adminPhone, "M",int(searchhospital), 0))
 
                                 if option=="Delete": 
                                     functions.dma("Delete",searchhospital,'add_hospital', ('x','x','x','x','x','x',0,0,0,'D', int(searchhospital),0))
@@ -563,22 +566,23 @@ def main():
                                     st.write("DOB:"+str(patdetail['dob'].loc[0]))
                                 #userid=accountlist.loc[accountlist['USERNAME']== searchusername,'ID'].iloc[0]
                             
-                                expatlist=['Make new Registration','Book Appointments','Check Appointments','Update existing Registration','Invoice']
+                                expatlist=['Make new Registration','Book Appointments','CheckIn Appointments','Update existing Registration','Invoice']
                                 choice1=st.selectbox('Choose',expatlist)
                                 if choice1== "Make new Registration":
-                                    reg_date=st.date_input("Registration Date",today)
+                                    reg_date=st.date_input("Registration Date")
+                                    print(reg_date)
                                     hospitalid=st.selectbox('Hospital ID',functions.searchid('hospital','hid'))
-                                    type= st.selectbox("Type", ['Out-patient', 'In-Patient'])
+                                    pattype= st.selectbox("Patinet Type", ['Out-patient', 'In-Patient'])
                                     discharge_date=today
                                     followup=today
                                     roomNo=0
-                                    if type=="Out-patient":
+                                    if pattype=="Out-patient":
                                         patient_type='O'
                                     else:
                                         patient_type='I'
-                                    if type=="Out-patient":
+                                    if pattype=="Out-patient":
                                         followup=st.date_input('Follow-up date', min_value=today)                                    
-                                    if type=="In-Patient":
+                                    if pattype=="In-Patient":
                                         roomNo=st.selectbox('Room No',functions.query_db(f'select roomno from rooms where hid={hospitalid}')['roomno'].tolist())
                                         discharge_date=st.date_input('Discharge Date')
                                     result=functions.dma("Add",'x','pat_registration',(patientID,reg_date,hospitalid,patient_type,followup,roomNo,discharge_date,'A',0))
@@ -586,54 +590,168 @@ def main():
                                         st.write(f"Your regsitration successfull for {patientID}on date {reg_date}.For future reference use Patient ID and registration date for accessing this registration")    
 
                                 if choice1=="Book Appointments":
-                                    #check SQL for subtype tables
-                                    #SQL: Select Speciality from Doctor
-                                    HID=st.selectbox('Hospital ID',['100'])
-                                    speciality=st.selectbox('Specialilty', ['Dermatologist '])
-
+                                    hospitalid=st.selectbox('Hospital ID',functions.searchid('hospital','hid'))
+                                    speciality=st.selectbox('Specialilty', functions.searchid('doctor','speciality'))
+                                    #SQL for finding the doctors who are full time on the selected hospital and with the selected speciality
+                                    if st.checkbox('find'):
+                                        aptid=0
+                                        fulltime=functions.query_db(f'select a.firstname, a.lastname from doctor a join full_time b on a.did=b.did where b.hid={hospitalid} and a.speciality=\'{speciality}\';')
+                                        Consultant=functions.query_db(f'select a.firstname, a.lastname, b.shift, b.hours from doctor a join consulting b on a.did=b.did where b.hid={hospitalid} and a.speciality=\'{speciality}\';')
                                     #SQL : select shift from consulting where speciality ={speciality} and HID={HID}
-
-                                    apptDate = st.date_input('Next Appointment date',min_value=today)
+                                        st.write("Full time Doctors:")
+                                        st.table(fulltime)  #displaying full time doctors
+                                        st.write("Visiting Doctors and Schedule:")
+                                        st.table(Consultant ) #displaying visiting doctors, so acc to schedule date can be chosen
+                                        apptDate = st.date_input('Next Appointment date',min_value=today)
 
                                     #SQL: Insert into pat_appointment(PID,NextvisitDateSchedued) values(PID,apptDate);
+                                        if st.button("Book"):
+                                            result=functions.insert_query_db('appointments',('B',patientID,apptDate,'A',aptid,0))
+                                            print(result)
+                                            if result:
+                                                st.write("Appointment is booked, The appointment ID is "+ str(functions.query_db(f'select MAX(appointmentid) as aptid from pat_appointment')['aptid'].loc[0]))
 
-                                #appointmentID= sql(SELECT LAST_INSERT_ID();
-                                
-                                    st.write()
-                                    #from the Pateint ID, book new appointment
-                                    #check from doctor schedule based on the speciality
-                                    #fetch doctors schedule 
-                                    # no need to book doctor schedule
-                                
+                                                #display max that is the appointment ID 
+
                                 if choice1 =="CheckIn Appointments":
-                                    AppointmentID =st.text_input("Appointment ID")
-                                    #SQL: select count() as found from pat_appointment;
-                                    if result:
+                                    AppointmentID =st.selectbox("Appointment ID",functions.searchid('pat_appointment','appointmentid'))
                                         #SQL: select * from pat_appointment where appointmentid={AppointmentID}
-                                #line 347 st.dataframe(flightdetail.loc[flightdetail['f_id']==flightid].rename(columns={"f_id":"Flight ID", "d_time":"Departure time","d_tz":"Departure Time zone","arr_time":"Arrival time", "a_tz":"Arrival time zone","am_id":"Aircraft Model","arpt_code_arv":"Arrival airport code","arpt_code_dep":"Departure airport code" }))
-                                        checkin=st.selectbox('Check in',['Y','N'])
-                                    #SQL:Insert into pat_appointment(PID,NextvisitDateSchedued,visitDAteCheckin) values(PID,apptDate,checkin); 
-                                        success=0
-                                        if success:
-                                            st.write("Done") 
-
-                                
+                                    if AppointmentID !=' ':
+                                        if st.button("Check-In"):
+                                            status = functions.query_db(f'select visitdatecheckin as found from pat_appointment where appointmentid= {AppointmentID}')['found'].loc[0]
+                                            if status =='N':
+                                                functions.insert_query_db('appointments',('C',0,today,'A',AppointmentID,0))
+                                                st.write("You are checked-in!")
+                                            else:
+                                                st.write("You are already checked-in!")
+                               
                                 if choice1=="Update existing Registration":
-                                    #display treatments details if any present
-                                    #display in the editable columns?
-                                    #button for update treatment record
-                                        with st.form("Treatment form"):
-                                            None
-                                            #subtype SQL  
-                                            #treatment table columns
+                                    treg_date=st.selectbox("Registration Date",functions.searchid('patient_reg','reg_date')) #search reg date
+                                    
+                                    if treg_date != ' ':
+                                        checktreactmentid=functions.query_db(f'select count(1) as found from treatment where pid={patientID} and reg_date=\'{treg_date}\'')['found'].loc[0]  #search if any treatment record exists
+                                        if checktreactmentid:   #if record exists
+                                            treatmentlist=functions.query_db(f'select treatmentid from treatment where pid={patientID} and reg_date=\'{treg_date}\'')['treatmentid'].tolist()
+                                            treatmentlist.insert(0,' ')
+                                            treatmentid=st.selectbox("Select treatment ID",treatmentlist)  #listing all the treatmetn ids for the patient and reg date
+                                            if treatmentid !=' ':
+                                                hospitalid=functions.query_db(f'select hid from treatment where treatmentid = {treatmentid};')['hid'].loc[0]
+                                        #display treatments details if any present  #display in the editable columns?
+                                                Disease=st.selectbox("Treatment for disease",functions.searchrecord('select icdcode from disease','treatment','icdcode',treatmentid))
+                                                typeresult=functions.query_db(f'select treatmenttype from treatment where treatmentid ={treatmentid}')['treatmenttype'].loc[0]
+                                                if typeresult=='L':
+                                                    indexfortype=1
+                                                elif typeresult=='D':
+                                                    indexfortype=2
+                                                elif typeresult=='S':
+                                                    indexfortype=3
+                                                else :
+                                                    indexfortype=0
+                                                trtmnttype=st.selectbox("Treatment Type",[' ','Lab Test','Drug Prescription','Surgery'], index=indexfortype)
+                                                treatingdoctor=st.selectbox("Doctor",functions.searchrecord(f'select did from hospital_doctor where hid = {hospitalid}','treatment','did',treatmentid))
+                                                st.write("Doctor Name :", str(functions.searchid('doctor','firstname')[1])+' '+str(functions.searchid('doctor','lastname')[1]))
+                                                treatmentdiscription=st.text_input("Doctor's diagnosis",value=functions.query_db(f'select description from treatment where treatmentid ={treatmentid}')['description'].loc[0])
+                                                trtmentresult=st.selectbox("Treatment status",['Ongoing','Terminated','Failed','Completed'])
+                                                treatmnt_type = trtmnttype[0]
+                                                treatmentresult=trtmentresult[0]
+                                                trtmntdate=today
+                                                labsurgeryID=0
+                                                labsur_result='x'
+                                                trtdrugid=0
+                                                doses=0
+                                                if treatmnt_type=='L':
+                                                    trtmntdate=st.date_input("Lab test date", value=functions.query_db(f'select testdate from p_lab where treatmentid ={treatmentid}')['testdate'].loc[0])
+                                                    labsurgeryID=st.selectbox("Lab ID",functions.searchrecord('select labid from lab;','p_lab','labid',treatmentid))
+                                                    storedresult=functions.query_db(f'select result from p_lab where treatmentid ={treatmentid}')['result'].loc[0]
+                                                    if storedresult=='P':
+                                                        indexforresult=1
+                                                    elif storedresult=='N':
+                                                        indexforresult=2
+                                                    elif storedresult=='p':
+                                                        indexforresult=3
+                                                    else :
+                                                        indexforresult=0
+                                                    labsurresult=st.selectbox("Lab Test Result",['Awaiting','Positive','Negative','Potential'],index=indexforresult)
+                                                elif treatmnt_type=='D':
+                                                    trtdrugid=st.selectbox("Drugname",functions.searchrecord('select drupid from drug_prescription;','p_drug_pres','drupid',treatmentid))
+                                                    doses=st.number_input("Doses",value=functions.query_db(f'select doses from p_drug_pres where treatmentid ={treatmentid}')['doses'].loc[0])
+                                                elif treatmnt_type=='S':
+                                                    trtmntdate=st.date_input("Surgery date", value=functions.query_db(f'select SurgeryDate from p_surgery where treatmentid ={treatmentid}')['SurgeryDate'].loc[0])
+                                                    labsurgeryID=st.selectbox("Surgery ID",functions.searchrecord('select surgeryid from surgery;','p_surgery','surgeryid',treatmentid))
+                                                    storedresult=functions.query_db(f'select result from p_surgery where treatmentid ={treatmentid}')['result'].loc[0]
+                                                    if storedresult=='U':
+                                                        indexforresult=1
+                                                    elif storedresult=='S':
+                                                        indexforresult=2
+                                                    else :
+                                                        indexforresult=0
+                                                    labsurresult=st.selectbox("Surgery Result",['Awaiting','Unsuccessful','Successful'],index=indexforresult)
+                                                    labsur_result=labsurresult[0]
+                                                if st.button("Update Treatment record"):  #button for update treatment record
+                                                    result=functions.insert_query_db('add_treatment',(int(patientID), str(treg_date),int(hospitalid),int(treatingdoctor),Disease,treatmentdiscription,treatmnt_type,treatmentresult,trtmntdate,int(labsurgeryID),labsur_result,int(trtdrugid),doses,'U',int(treatmentid),0))
+                                                    if result:
+                                                        st.write(f"The Treatment {treatmentid} is updated")
 
-                                
+                                        else:
+                                            st.write("No treatment record added yet")
+                                        if st.checkbox("Add Treatment Record"):
+                                            hospitalid=functions.query_db(f'select hid from patient_reg where pid={patientID} and reg_date=\'{treg_date}\';')['hid'].loc[0]
+                                            Disease=st.selectbox("Treatment for disease",functions.searchid('disease','icdcode'))
+                                            trtmnttype=st.selectbox("Treatment Type",[' ','Lab Test','Drug Prescription','Surgery'])
+                                            treatingdoctor=st.selectbox("Doctor",functions.query_db(f'select did from hospital_doctor where hid = {hospitalid};')['did'].tolist())
+                                            treatmentdiscription=st.text_input("Doctor's diagnosis")
+                                            trtmentresult=st.selectbox("Treatment status",[' ','Ongoing','Terminated','Failed','Completed'])
+                                            treatmnt_type = trtmnttype[0]
+                                            treatmentresult=trtmentresult[0]
+                                            trtmntdate=today
+                                            labsurgeryID=0
+                                            labsur_result='x'
+                                            trtdrugid=0
+                                            doses=0
+                                            if treatmnt_type=='L':
+                                                trtmntdate=st.date_input("Lab test date")
+                                                labsurgeryID=st.selectbox("Lab ID",functions.searchid('lab','labid'))
+                                                labsurresult=st.selectbox("Lab Test Result",[' ','Awaiting','Positive','Negative','Potential'])
+                                                labsur_result=labsurresult[0]
+                                            elif treatmnt_type=='D':
+                                                trtdrugid=st.selectbox("Drug name",functions.searchid('drug_prescription','drupid'))
+                                                doses=st.number_input("Doses")
+                                            elif treatmnt_type=='S':
+                                                trtmntdate=st.date_input("Surgery date")
+                                                labsurgeryID=st.selectbox("Surgery ID",functions.searchid('surgery','surgeryid'))
+                                                labsurresult=st.selectbox("Surgery Result",[' ','Awaiting','Unsuccessful','Successful'])
+                                                labsur_result=labsurresult[0]
+                                            if st.button("Add"):
+                                                result=functions.insert_query_db('add_treatment',(patientID, str(treg_date),int(hospitalid),treatingdoctor,Disease,treatmentdiscription,treatmnt_type,treatmentresult,trtmntdate,labsurgeryID,labsur_result,trtdrugid,doses,'A',0,0))
+                                                if result:
+                                                    st.write("Treatment record added" + str(functions.query_db(f'select MAX(treatmentid) as treatmentid from treatment')['treatmentid'].loc[0]))
                                 if choice1=="Invoice":
+                                    treg_date=st.selectbox("Registration Date",functions.searchid('patient_reg','reg_date')) #search reg date
+
                                     #if no invoice found, display no invoice
-                                    found=f'#SQL:select count(1) as found from patient where pid = {PID} and reg_date={Reg_Date}'
-                                    if not found:
-                                        #384
-                                        None
+                                    if treg_date !=' ':
+                                        if len(functions.query_db(f'select * from invoice where pid={patientID} and reg_date=\'{treg_date}\';'))==0:
+                                            st.write("No invoice found")
+                                        else: #if invoice found, display invoice
+                                            st.write("Invoice--")
+                                            invoiceid=functions.query_db(f'select * from invoice where pid={patientID} and reg_date=\'{treg_date}\';')
+                                            st.write(f"Invoice ID: {invoiceid['invoiceno'].loc[0]}")
+                                            st.write(f"Invoice Date: {invoiceid['InvoiceDate'].loc[0]}")
+                                            st.write(f"Patient ID: {invoiceid['pid'].loc[0]}")
+                                            st.write(f"Registration Date: {invoiceid['reg_date'].loc[0]}")
+                                            st.write(f"Lab cost: {invoiceid['labcost'].loc[0]}")
+                                            st.write(f"Presciption Drug: {invoiceid['prescriptionname'].loc[0]}")
+                                            st.write(f"Drug cost: {invoiceid['drugcost'].loc[0]}")
+                                            st.write(f"Surgery cost: {invoiceid['surgerycost'].loc[0]}")
+                                            st.write(f"Room cost: {invoiceid['roomcost'].loc[0]}")
+                                            totalcost=invoiceid['labcost'].loc[0]+invoiceid['drugcost'].loc[0]+invoiceid['surgerycost'].loc[0]+invoiceid['roomcost'].loc[0]
+                                            st.write(f"Total cost: {totalcost}")
+                                            st.write(f"Payable by Insurance: ({invoiceid['payablebyinsurance'].loc[0]}%) {totalcost*(invoiceid['payablebyinsurance'].loc[0]/100)}")
+                                            payablebypateint=100-invoiceid['payablebyinsurance'].loc[0]
+                                            st.write(f"Payable by Patient: ({payablebypateint}%) {totalcost*(payablebypateint/100)}")
+    #found=f'#SQL:select count(1) as found from patient where pid = {PID} and reg_date={Reg_Date}'
+                                    
+                                        
                             else:
                                 st.write("Patient ID not found, try again")
 
@@ -641,31 +759,7 @@ def main():
                                 #button to print invoice
                                 
 
- 
 
-
-                            
-
-
-
-
-
-
-
-
-
-                            #st.button("Modify/delete information")
-
-
-
-
-
-
-
-
-
-
-                    # add list of patient registration and all the patient related stuff 
 
 
 

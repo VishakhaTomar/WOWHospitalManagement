@@ -1,68 +1,63 @@
 create database vishakhadb;
-
 use vishakhadb;
 
 CREATE TABLE usertable (
-    ID DOUBLE NOT NULL AUTO_INCREMENT,
+    ID INTEGER(10) NOT NULL primary key AUTO_INCREMENT,
     USERNAME VARCHAR(30),
-    USERPASSWORD VARCHAR(100),
-    USERTYPE VARCHAR(10)
+    USERPASSWORD VARCHAR(30),
+    USERTYPE VARCHAR(10),
+    tbl_last_date DATETIME
     );
-ALTER TABLE USERTABLE ADD CONSTRAINT USERTABLE_PK PRIMARY KEY( ID );
+    
+create unique index username_idx on usertable(USERNAME);
 
-INSERT INTO usertable (USERNAME, USERPASSWORD,USERTYPE) VALUES ('Admin1','4356a21b1b6643f1514a7c50e80d6fbdc0486a97567d193ce483c2538493713a','A');
-INSERT INTO usertable (USERNAME, USERPASSWORD,USERTYPE) VALUES ('Tom','4356a21b1b6643f1514a7c50e80d6fbdc0486a97567d193ce483c2538493713a','F');
-INSERT INTO usertable (USERNAME, USERPASSWORD,USERTYPE) VALUES ('Harry','4356a21b1b6643f1514a7c50e80d6fbdc0486a97567d193ce483c2538493713a','B');
+INSERT INTO usertable VALUES ( 1,'Admin1',
+'4356a21b1b6643f1514a7c50e80d6fbdc0486a97567d193ce483c2538493713a','A',sysdate());
 
-
-CREATE PROCEDURE add_usertable (IN in_username varchar, IN in_USERPASSWORD varchar,IN in_USERTYPE varchar )
-BEGIN
-INSERT INTO usertable(USERNAME, USERPASSWORD,USERTYPE,tbl_last_date) VALUES (in_username,in_USERPASSWORD,in_USERTYPE,sysdate);
-
-END; 
+INSERT INTO usertable (USERNAME, USERPASSWORD,USERTYPE,tbl_last_date) VALUES ('Tom','4356a21b1b6643f1514a7c50e80d6fbdc0486a97567d193ce483c2538493713a','F',sysdate());
+INSERT INTO usertable (USERNAME, USERPASSWORD,USERTYPE,tbl_last_date) VALUES ('Harry','4356a21b1b6643f1514a7c50e80d6fbdc0486a97567d193ce483c2538493713a','B',sysdate());
 
 CREATE TABLE hospital (
-    hid           DOUBLE NOT NULL primary key AUTO_INCREMENT,
+    hid           INTEGER(10) NOT NULL primary key AUTO_INCREMENT,
+    hname         VARCHAR(30),
     plotno        VARCHAR(30),
     street        VARCHAR(30),
     city          VARCHAR(30),
     state         VARCHAR(30),
     zipcode       VARCHAR(30),
     speciality    VARCHAR(30) COMMENT 'Speciality of the hospital(Heart/Cancer/Surgery)',
-    ecchotline    BIGINT COMMENT 'EmergencyHotlineNumber',
-    phoneno       BIGINT,
-    adminphone    BIGINT,
+    ecchotline    INTEGER(10) COMMENT 'EmergencyHotlineNumber',
+    phoneno       INTEGER(10),
+    adminphone    INTEGER(10),
     tbl_last_date DATETIME
 );
 
 
 CREATE TABLE hdepartment (
-    did           DOUBLE NOT NULL PRIMARY KEY AUTO_INCREMENT, 
+    did           INTEGER(10) NOT NULL PRIMARY KEY AUTO_INCREMENT, 
     dname         VARCHAR(30) COMMENT 'DepartmentName',
-    phoneno       BIGINT,
+    phoneno       INTEGER(10),
     buildingname  VARCHAR(30),
     floor         VARCHAR(30) COMMENT 'Location of the dept, Floor in the building',
-    hid           DOUBLE NOT NULL,
+    hid           INTEGER(10) NOT NULL,
     tbl_last_date DATETIME
 );
 
-
 CREATE TABLE rooms (
-    hid           DOUBLE NOT NULL,
-    roomno        DOUBLE NOT NULL,
-    floor         SMALLINT,
+    hid           INTEGER(10) NOT NULL,
+    roomno        VARCHAR(30) NOT NULL,
+    floor         INTEGER(5),
     building      VARCHAR(30),
     cost          DECIMAL(6, 2) COMMENT 'CostperNightoftheRoom',
     availability  CHAR(1) COMMENT 'RoomAvailableOrNot',
     tbl_last_date DATETIME
 );
-
 ALTER TABLE rooms ADD CONSTRAINT rooms_pk PRIMARY KEY ( roomno,
                                                         hid );
 
 
 CREATE TABLE doctor (
-    did             DOUBLE PRIMARY KEY AUTO_INCREMENT NOT NULL COMMENT 'DoctorId',
+    did             INTEGER(10) PRIMARY KEY AUTO_INCREMENT NOT NULL COMMENT 'DoctorId',
     firstname       VARCHAR(30),
     lastname        VARCHAR(30),
     houseno         VARCHAR(30),
@@ -70,9 +65,9 @@ CREATE TABLE doctor (
     city            VARCHAR(30),
     state           VARCHAR(30),
     zipcode         VARCHAR(30),
-    officephoneno   BIGINT,
-    personalphoneno BIGINT,
-    eccno           BIGINT COMMENT 'Emergency call No',
+    officephoneno   INTEGER(10),
+    personalphoneno INTEGER(10),
+    eccno           INTEGER(10) COMMENT 'Emergency call No',
     eccname         VARCHAR(30),
     speciality      VARCHAR(30),
     tbl_last_date   DATETIME
@@ -80,48 +75,48 @@ CREATE TABLE doctor (
 
 
 CREATE TABLE hospital_doctor (
-    hid           DOUBLE NOT NULL,
-    did           DOUBLE NOT NULL,
+    hid           INTEGER(10) NOT NULL,
+    did           INTEGER(10) NOT NULL,
     type          CHAR(1) COMMENT 'EitherFulltimeDoctororCunsultant',
     tbl_last_date DATETIME
 );
 ALTER TABLE hospital_doctor ADD CONSTRAINT hospital_doctor_pk PRIMARY KEY ( hid,
                                                                             did );
 CREATE TABLE consulting (
-    hid             DOUBLE NOT NULL,
-    did             DOUBLE NOT NULL,
-    contractdate    DATETIME COMMENT 'ContractStartDate',
+    hid             INTEGER(10) NOT NULL,
+    did             INTEGER(10) NOT NULL,
+    contractdate    DATE COMMENT 'ContractStartDate',
     contractno      VARCHAR(30),
-    contractenddate DATETIME,
+    contractenddate DATE,
     hours           DECIMAL(4, 2) COMMENT 'NoOfHoursWorking',
     salary          DECIMAL(10, 2) COMMENT 'SalaryPerHour',
     overtimerate    DECIMAL(10, 2) COMMENT 'OvertimeSalary',
-    shift           DATETIME
+    shift           VARCHAR(30),
+    tbl_last_date DATETIME
 );
-alter table consulting modify COLUMN shift VARCHAR(30);
 ALTER TABLE consulting ADD CONSTRAINT consulting_pk PRIMARY KEY ( hid,
                                                                   did );
 CREATE TABLE full_time (
-    hid      DOUBLE NOT NULL,
-    did      DOUBLE NOT NULL,
-    hiredate DATETIME,
-    salary   DECIMAL(10, 2)
+    hid      INTEGER(10) NOT NULL,
+    did      INTEGER(10) NOT NULL,
+    hiredate DATE,
+    salary   DECIMAL(10, 2),
+    tbl_last_date DATETIME
 );
 ALTER TABLE full_time ADD CONSTRAINT full_time_pk PRIMARY KEY ( hid,
                                                                 did );
 CREATE TABLE disease (
     icdcode       VARCHAR(5) NOT NULL,
     name          VARCHAR(30) NOT NULL,
-    description   VARCHAR(30) NOT NULL,
+    description   VARCHAR(100) NOT NULL,
     type          VARCHAR(30) NOT NULL COMMENT 'TypeofDisease(Seasonal/chronic/viral/genetic..etc)',
     tbl_last_date DATETIME
 );
 ALTER TABLE disease ADD CONSTRAINT disease_pk PRIMARY KEY ( icdcode );
 
 
-/*CHANGED*/ 
 CREATE TABLE insurance_plan (
-    planid                DOUBLE NOT NULL PRIMARY KEY AUTO_INCREMENT COMMENT 'InsurancePlanId',
+    planid                INTEGER(10) NOT NULL PRIMARY KEY AUTO_INCREMENT COMMENT 'InsurancePlanId',
     insurancename         VARCHAR(30) NOT NULL,
     insuranceprovider     VARCHAR(30) NOT NULL COMMENT 'InsuranceCompany',
     inPatientCoverage  DECIMAL(4, 2) NOT NULL,
@@ -131,7 +126,7 @@ CREATE TABLE insurance_plan (
 
 
 CREATE TABLE patients (
-    pid            DOUBLE NOT NULL PRIMARY KEY AUTO_INCREMENT COMMENT 'Patient Id',
+    pid           INTEGER(10) NOT NULL PRIMARY KEY AUTO_INCREMENT COMMENT 'Patient Id',
     firstname      VARCHAR(30),
     lastname       VARCHAR(30),
     houseno        VARCHAR(30),
@@ -139,24 +134,19 @@ CREATE TABLE patients (
     city           VARCHAR(30),
     state          VARCHAR(30),
     zipcode        VARCHAR(30),
-    phoneno        BIGINT,
-    dob            DATETIME COMMENT 'DateOfBirth',
+    phoneno        INTEGER(10),
+    dob            DATE COMMENT 'DateOfBirth',
     race           VARCHAR(30),
     maritialstatus VARCHAR(30),
     gender         CHAR(1),
     bloodgroup     CHAR(3),
-    planid         DOUBLE NOT NULL,
+    planid         INTEGER(10) NOT NULL,
     tbl_last_date  DATETIME
 );
 
-CREATE UNIQUE INDEX patients__idx ON
-    patients (
-        planid
-    ASC );
-
 CREATE TABLE emergency_contact (
-    ecid          DOUBLE NOT NULL PRIMARY KEY AUTO_INCREMENT COMMENT 'EmergencyContactId',
-    pid           DOUBLE NOT NULL,
+    ecid          INTEGER(10) NOT NULL PRIMARY KEY AUTO_INCREMENT COMMENT 'EmergencyContactId',
+    pid           INTEGER(10) NOT NULL,
     firstname     VARCHAR(30),
     lastname      VARCHAR(30),
     houseno       VARCHAR(30),
@@ -164,25 +154,25 @@ CREATE TABLE emergency_contact (
     city          VARCHAR(30),
     state         VARCHAR(30),
     zipcode       VARCHAR(30),
-    phoneno       BIGINT,
+    phoneno       INTEGER(10),
     relationship  VARCHAR(30) COMMENT 'Relationship to the Patient',
     tbl_last_date DATETIME
 );
 
 
 CREATE TABLE pat_appointment (
-    pid                   DOUBLE NOT NULL ,
-    appointmentid         BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    nextvisitdateschedued DATETIME,
+    pid                   INTEGER(10) NOT NULL ,
+    appointmentid         INTEGER(10) NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    nextvisitdateschedued DATE,
     visitdatecheckin      CHAR(1) COMMENT 'Visit date will be checked in yes when patient make it to the appointment',
     tbl_last_date         DATETIME
 );
 
 
-
 CREATE TABLE patient_reg (
-    pid           DOUBLE NOT NULL,
-    reg_date      DATETIME NOT NULL,
+    pid           INTEGER(10) NOT NULL,
+    reg_date      DATE NOT NULL,
+    hid           INTEGER(10), 
     patient_type  CHAR(1) NOT NULL,
     tbl_last_date DATETIME
 );
@@ -190,20 +180,19 @@ CREATE TABLE patient_reg (
 ALTER TABLE patient_reg ADD CONSTRAINT patient_reg_pk PRIMARY KEY ( pid,reg_date);
 
 CREATE TABLE inPatient (
-    pid                DOUBLE NOT NULL,
-    reg_date           DATETIME NOT NULL,
-    dischargedate      DATETIME NOT NULL,
-    roomno       DOUBLE,
-    hid DOUBLE
+    pid                INTEGER(10) NOT NULL,
+    reg_date           DATE NOT NULL,
+    dischargedate      DATE NOT NULL,
+    roomno       INTEGER(10),
+    hid INTEGER(10)
 );
 
 ALTER TABLE inPatient ADD CONSTRAINT inPatient_PK PRIMARY KEY ( pid,
                                                                       reg_date );
 CREATE TABLE outPatient (
-    pid          DOUBLE NOT NULL,
-    hid          DOUBLE
-    reg_date     DATETIME NOT NULL,
-    followupdate DATETIME NOT NULL
+    pid          INTEGER(10) NOT NULL,
+    reg_date     DATE NOT NULL,
+    followupdate DATE NOT NULL
 );
 
 ALTER TABLE outPatient ADD CONSTRAINT outPatient_PK PRIMARY KEY ( pid,
@@ -211,22 +200,21 @@ ALTER TABLE outPatient ADD CONSTRAINT outPatient_PK PRIMARY KEY ( pid,
 
 
 CREATE TABLE treatment (
-    treatmentid     DOUBLE NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    treatmentid     INTEGER(10) NOT NULL PRIMARY KEY AUTO_INCREMENT,
     treatmenttype   CHAR(1) NOT NULL,
-    pid             DOUBLE NOT NULL,
-    reg_date        DATETIME NOT NULL,
+    pid             INTEGER(10) NOT NULL,
+    reg_date        DATE NOT NULL,
     treatmentresult CHAR(1) NOT NULL COMMENT 'CforComplete/FforFail/TforTerminated',
     description     VARCHAR(50),
-    hid             DOUBLE NOT NULL,
-    did             DOUBLE NOT NULL,
+    hid             INTEGER(10) NOT NULL,
+    did             INTEGER(10) NOT NULL,
     icdcode         VARCHAR(5),
     tbl_last_date   DATETIME
 );
 
 
-
 CREATE TABLE drug_prescription (
-    drupid           SMALLINT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    drupid           INTEGER(5) NOT NULL PRIMARY KEY AUTO_INCREMENT,
     prescriptionname VARCHAR(30) NOT NULL,
     cost             DECIMAL(6, 2) NOT NULL COMMENT 'Cost_per_dose',
     tbl_last_date    DATETIME
@@ -234,7 +222,7 @@ CREATE TABLE drug_prescription (
 
 
 CREATE TABLE lab (
-    labid         DOUBLE NOT NULL  PRIMARY KEY AUTO_INCREMENT,
+    labid         INTEGER(10) NOT NULL  PRIMARY KEY AUTO_INCREMENT,
     labname       VARCHAR(30) NOT NULL,
     cost          DECIMAL(6, 2) NOT NULL,
     sample        VARCHAR(30) NOT NULL COMMENT 'type of sample required',
@@ -243,49 +231,51 @@ CREATE TABLE lab (
 
 
 CREATE TABLE surgery (
-    surgeryid     SMALLINT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    surgeryid     INTEGER(5) NOT NULL PRIMARY KEY AUTO_INCREMENT,
     surgeryname   VARCHAR(30) NOT NULL,
     description   VARCHAR(30) NOT NULL,
     cost          DECIMAL(6, 2) NOT NULL,
     tbl_last_date DATETIME
 );
-alter table surgery drop COLUMN time;
 
 CREATE TABLE p_drug_pres (
-    treatmentid DOUBLE NOT NULL,
-    drupid      SMALLINT,
-    doses       DOUBLE NOT NULL COMMENT 'No_of_Doses'
+    treatmentid INTEGER(10) NOT NULL,
+    drupid      INTEGER(5),
+    doses       INTEGER(10) NOT NULL COMMENT 'No_of_Doses',
+    tbl_last_date  DATETIME
 );
 
 ALTER TABLE p_drug_pres ADD CONSTRAINT p_drug_pres_pk PRIMARY KEY ( treatmentid );
 
 
 CREATE TABLE p_lab (
-    treatmentid DOUBLE NOT NULL,
-    testdate    DATETIME NOT NULL,
-    labid       DOUBLE,
+    treatmentid INTEGER(10) NOT NULL,
+    testdate    DATE NOT NULL,
+    labid       INTEGER(10),
     testtype    VARCHAR(30) COMMENT 'what_type_of_test_it_is',
-    result      CHAR(1) COMMENT 'Positvie/Negative/potential'
+    result      CHAR(1) COMMENT 'Positvie/Negative/potential',
+    tbl_last_date  DATETIME
 );
 ALTER TABLE p_lab ADD CONSTRAINT p_lab_pk PRIMARY KEY ( treatmentid,
                                                         testdate );
 
 
 CREATE TABLE p_surgery (
-    treatmentid DOUBLE NOT NULL,
-    SurgeryDate      DATETIME NOT NULL,
-    surgeryid   SMALLINT,
-    result      CHAR(1) COMMENT 'SforSuccessfull/UforUnsuccessfull'
+    treatmentid INTEGER(10) NOT NULL,
+    SurgeryDate      DATE NOT NULL,
+    surgeryid   INTEGER(5),
+    result      CHAR(1) COMMENT 'SforSuccessfull/UforUnsuccessfull',
+    tbl_last_date  DATETIME
 );
 ALTER TABLE p_surgery ADD CONSTRAINT p_surgery_pk PRIMARY KEY ( treatmentid,SurgeryDate );
 
 
 
 CREATE TABLE invoice (
-    invoiceno          BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    InvoiceDate             DATETIME NOT NULL,
-    pid                DOUBLE NOT NULL,
-    reg_date           DATETIME NOT NULL,
+    invoiceno          INTEGER(10) NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    InvoiceDate             DATE NOT NULL,
+    pid                INTEGER(10) NOT NULL,
+    reg_date           DATE NOT NULL,
     labcost            DECIMAL(6, 2) NOT NULL,
     prescriptionname   VARCHAR(30) NOT NULL,
     drugcost           DECIMAL(6, 2) NOT NULL,
@@ -296,7 +286,7 @@ CREATE TABLE invoice (
     payablebyinsurance DECIMAL(6, 2) NOT NULL,
     tbl_last_date      DATETIME
 );
-/*ALTER TABLE invoice MODIFY COLUMN pid DOUBLE NOT NULL;*/
+
 CREATE UNIQUE INDEX invoice__idx ON
     invoice (
         pid
@@ -308,15 +298,15 @@ CREATE UNIQUE INDEX invoice__idx ON
 
 
 CREATE TABLE payment_insurance (
-    invoiceno     BIGINT NOT NULL,
+    invoiceno     INTEGER(10) NOT NULL,
     paymentmethod VARCHAR(30),
     tbl_last_date DATETIME
 );
 ALTER TABLE payment_insurance ADD CONSTRAINT invoice_pk PRIMARY KEY ( invoiceno );
 
 CREATE TABLE payment_patient (
-    invoiceno     BIGINT NOT NULL,
-    creditcardno  BIGINT,
+    invoiceno     INTEGER(10) NOT NULL,
+    creditcardno  INTEGER(10),
     cardtype      VARCHAR(30) COMMENT 'Mater/Maestro/Visa',
     tbl_last_date DATETIME
 );
@@ -358,13 +348,13 @@ ALTER TABLE inPatient
                                                              reg_date )
         REFERENCES patient_reg ( pid,
                                  reg_date );
-
+/* */
 ALTER TABLE inPatient
-    ADD CONSTRAINT inPatient_Rooms_FK FOREIGN KEY ( roomno,
-                                                       hid )
-        REFERENCES rooms ( roomno,
-                           hid );
+    ADD CONSTRAINT inPatient_Rooms_FK FOREIGN KEY ( roomno,hid)
+        REFERENCES rooms ( roomno,hid
+                           );
 
+                           
 ALTER TABLE invoice
     ADD CONSTRAINT invoice_patient_reg_fk FOREIGN KEY ( pid,
                                                         reg_date )
@@ -452,6 +442,7 @@ ALTER TABLE pat_appointment AUTO_INCREMENT=900000;
 ALTER TABLE treatment AUTO_INCREMENT=8000000;
 ALTER TABLE drug_prescription AUTO_INCREMENT=60;
 ALTER TABLE lab AUTO_INCREMENT=70000;
-ALTER TABLE surgery AUTO_INCREMENT=79000;
+ALTER TABLE surgery AUTO_INCREMENT=790;
 ALTER TABLE invoice AUTO_INCREMENT=11990000;
 
+select * from usertable;
