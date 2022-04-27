@@ -148,8 +148,64 @@ def dma(action,id,procedure:str,args):
             if result:
                 st.write("Deleted")
                 return result
-    
 
 
-                            
-                            
+
+########## Data Warehouse ##########
+
+
+def query_db_dw(sql: str):
+    print(sql)
+    # print(f'Running query_db(): {sql}')
+    mydb = mysql.connector.connect(user="VishakhaTomar", password="zaq1@wsx", 
+                                host="vishakhaserverfordw.database.windows.net", port=1433, 
+                                database="Data_warehouse")
+
+  # Open a cursor to perform database operations
+    cur = mydb.cursor()
+
+    # Execute a command: this creates a new table
+    cur.execute(sql)
+
+    # Obtain data
+    data = cur.fetchall()
+
+    column_names = [desc[0] for desc in cur.description]
+
+    # Make the changes to the database persistent
+
+    # Close communication with the database
+    cur.close()
+    mydb.close()
+
+    df = pd.DataFrame(data=data, columns=column_names)
+
+    return df
+
+
+def insert_query_db_dw(sql: str,arg ):
+    print(sql)
+    print(arg)
+    # print(f'Running query_db(): {sql}')
+    # print(f'Running query_db(): {sql}')
+    mydb = mysql.connector.connect(user="VishakhaTomar", password="zaq1@wsx", 
+                                host="vishakhaserverfordw.database.windows.net", port=1433, 
+                                database="Data_warehouse")
+                                
+  # Open a cursor to perform database operations
+    cur = mydb.cursor()
+
+    # Open a cursor to perform database operations
+    cur = mydb.cursor()
+
+    # Execute a command: this creates a new table
+    x=cur.callproc(sql, args=arg)
+    print(x)
+
+    # Make the changes to the database persistent
+    mydb.commit()
+
+    # Close communication with the database
+    cur.close()
+    mydb.close()
+    return x

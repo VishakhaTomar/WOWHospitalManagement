@@ -14,6 +14,7 @@ import hashlib
 import base64
 import mysql.connector
 import functions
+import dw_postgres
 
 #.streamlit/config.toml
 #primaryColor="#040404"
@@ -44,9 +45,16 @@ def main():
                 user = userType['usertype'].loc[0]
                 if user =='A':
                     print("Welcome Admin")
-                    temp = ['Add employee account','Modify/Delete employee account']  #admin will add frontdesk account,
+                    temp = ['Add employee account','Modify/Delete employee account','Backup']  #admin will add frontdesk account,
                                                                                 #backoffice acount
                     choice = st.selectbox('Menu', temp)
+                    if choice =='Backup':
+                        st.write("Select button for backup")
+                        coldw=st.columns(2)
+                        with coldw[0]:
+                            dw_postgres.stage()
+                        with coldw[1]:
+                            dw_postgres.dw()
                     if choice == 'Add employee account':
                         with st.form("employee_account_form"):
                             new_user = st.text_input("Username")
@@ -520,12 +528,11 @@ def main():
                             plan_name=st.selectbox("Insurance plan",functions.searchid('insurance_plan','insurancename'))
                         result=functions.dma("Add","x",'add_patient',('P',fname,lname,pthousenum,ptstreet,ptcity,ptstate,ptzipcode,ptcontact_number,ptdob,ptRace,Maritial_Status,ptgender,blood_group,plan_name,'A',0,0))
                         if result:
-                            st.write("Patient ID is "+ str(functions.query_db(f'select MAX(PID) as patid from patients')['patid'].loc[0]))
+                            patid=functions.query_db(f'select MAX(PID) as patid from patients')['patid'].loc[0]
+                            st.write("Patient ID is "+ str(patid))
                             st.write("Enter Emergency Contact")
 
-                            i=1
-                            while st.button(f'Add Contact{i}'):
-                                i=i+1
+                            if st.button(f'Add Ecc Contact'):
                                 with st.form("Ecc_form"):
                                     EccCol1=st.columns(2)
                                     with EccCol1[0]:
@@ -547,21 +554,21 @@ def main():
                                     with EccCol3[2]:
                                         ecccontact_number = st.number_input('contact number', min_value=999999999, max_value=9999999999)
                                     relationship = st.text_input('Enter your your relationship to the person', max_chars=30)
-                                    submitted3=functions.dma("Add","x",'add_patient',('E',eccfname,ecclname,ecchousenum,eccstreet,ecccity,eccstate,ecczipcode,ecccontact_number,today,relationship,'Maritial_Status','x','x',0,'A',0,0))
+                                    submitted3=functions.dma("Add","x",'add_patient',('E',eccfname,ecclname,ecchousenum,eccstreet,ecccity,eccstate,ecczipcode,ecccontact_number,today,relationship,'Maritial_Status','x','x',0,'A',patid,0))
                                     if submitted3:
-                                        st.write("Done")
+                                        st.write("Added Emergency Contact")
 
 
 
                     if choice=='Existing Patient' :
-                        patientID=st.number_input("Patient ID",max_value=9999999999)
+                        patientID=st.selectbox("Patient ID",functions.query_db('select PID from patients')['PID'].tolist())
                         if st.checkbox('Search'): 
                             checkid=functions.query_db(f'select count(1) as found from patients where pid={patientID}')['found'].loc[0]
                             if checkid:
                                 patdetail=functions.query_db(f'select * from patients where pid={patientID}')
                                 colpat=st.columns(2)
                                 with colpat[0]:
-                                    st.write("Patient Name:"+str(patdetail['firstname'].loc[0])+str(patdetail['lastname'].loc[0]))
+                                    st.write("Patient Name:"+str(patdetail['firstname'].loc[0])+" "+ str(patdetail['lastname'].loc[0]))
                                 with colpat[1]:
                                     st.write("DOB:"+str(patdetail['dob'].loc[0]))
                                 #userid=accountlist.loc[accountlist['USERNAME']== searchusername,'ID'].iloc[0]
@@ -591,7 +598,10 @@ def main():
 
                                 if choice1=="Book Appointments":
                                     hospitalid=st.selectbox('Hospital ID',functions.searchid('hospital','hid'))
-                                    speciality=st.selectbox('Specialilty', functions.searchid('doctor','speciality'))
+                                    tempspecialitylist= functions.query_db(f'select distinct speciality from doctor')['speciality'].tolist()
+                                    tempspecialitylist.insert(0,' ')
+                                    speciality=st.selectbox('Specialilty', tempspecialitylist)                                
+                                    #speciality=st.selectbox('Specialilty', functions.searchid('doctor','speciality'))
                                     #SQL for finding the doctors who are full time on the selected hospital and with the selected speciality
                                     if st.checkbox('find'):
                                         aptid=0
@@ -626,7 +636,10 @@ def main():
                                                 st.write("You are already checked-in!")
                                
                                 if choice1=="Update existing Registration":
-                                    treg_date=st.selectbox("Registration Date",functions.searchid('patient_reg','reg_date')) #search reg date
+                                    tempreglist=functions.query_db(f'select reg_date from patient_reg where pid={patientID}')['reg_date'].tolist()
+                                    tempreglist.insert(0,' ')
+                                    treg_date=st.selectbox("Registration Date",tempreglist) #search reg date                                    
+                                    #treg_date=st.selectbox("Registration Date",functions.searchid('patient_reg','reg_date')) #search reg date
                                     
                                     if treg_date != ' ':
                                         checktreactmentid=functions.query_db(f'select count(1) as found from treatment where pid={patientID} and reg_date=\'{treg_date}\'')['found'].loc[0]  #search if any treatment record exists
@@ -651,7 +664,16 @@ def main():
                                                 treatingdoctor=st.selectbox("Doctor",functions.searchrecord(f'select did from hospital_doctor where hid = {hospitalid}','treatment','did',treatmentid))
                                                 st.write("Doctor Name :", str(functions.searchid('doctor','firstname')[1])+' '+str(functions.searchid('doctor','lastname')[1]))
                                                 treatmentdiscription=st.text_input("Doctor's diagnosis",value=functions.query_db(f'select description from treatment where treatmentid ={treatmentid}')['description'].loc[0])
-                                                trtmentresult=st.selectbox("Treatment status",['Ongoing','Terminated','Failed','Completed'])
+                                                trtmentstroredresult=functions.query_db(f'select treatmentresult from treatment where treatmentid ={treatmentid}')['treatmentresult'].loc[0]
+                                                if trtmentstroredresult=='O':
+                                                    indexfortreatmentresult=0
+                                                elif trtmentstroredresult=='T':
+                                                    indexfortreatmentresult=1
+                                                elif trtmentstroredresult=='F':
+                                                    indexfortreatmentresult=2
+                                                elif trtmentstroredresult=='C':
+                                                    indexfortreatmentresult=3 
+                                                trtmentresult=st.selectbox("Treatment status",['Ongoing','Terminated','Failed','Completed'], index=indexfortreatmentresult)
                                                 treatmnt_type = trtmnttype[0]
                                                 treatmentresult=trtmentresult[0]
                                                 trtmntdate=today
@@ -724,9 +746,13 @@ def main():
                                             if st.button("Add"):
                                                 result=functions.insert_query_db('add_treatment',(patientID, str(treg_date),int(hospitalid),treatingdoctor,Disease,treatmentdiscription,treatmnt_type,treatmentresult,trtmntdate,labsurgeryID,labsur_result,trtdrugid,doses,'A',0,0))
                                                 if result:
-                                                    st.write("Treatment record added" + str(functions.query_db(f'select MAX(treatmentid) as treatmentid from treatment')['treatmentid'].loc[0]))
+                                                    st.write("Treatment record added " + str(functions.query_db(f'select MAX(treatmentid) as treatmentid from treatment')['treatmentid'].loc[0]))
                                 if choice1=="Invoice":
-                                    treg_date=st.selectbox("Registration Date",functions.searchid('patient_reg','reg_date')) #search reg date
+                                    tempreglist=functions.query_db(f'select reg_date from patient_reg where pid={patientID}')['reg_date'].tolist()
+                                    tempreglist.insert(0,' ')
+                                    treg_date=st.selectbox("Registration Date",tempreglist) #search reg date                                    
+                                    
+                                    #treg_date=st.selectbox("Registration Date",functions.searchid('patient_reg','reg_date')) #search reg date
 
                                     #if no invoice found, display no invoice
                                     if treg_date !=' ':
@@ -749,6 +775,8 @@ def main():
                                             st.write(f"Payable by Insurance: ({invoiceid['payablebyinsurance'].loc[0]}%) {totalcost*(invoiceid['payablebyinsurance'].loc[0]/100)}")
                                             payablebypateint=100-invoiceid['payablebyinsurance'].loc[0]
                                             st.write(f"Payable by Patient: ({payablebypateint}%) {totalcost*(payablebypateint/100)}")
+                                            functions.insert_query_db(f'update invoice set payablebypateint={payablebypateint} where pid={patientID} and reg_date=\'{treg_date}\';')
+                                            functions.insert_query_db(f'update invoice set totalcost = {totalcost} where pid={patientID} and reg_date=\'{treg_date}\';')
     #found=f'#SQL:select count(1) as found from patient where pid = {PID} and reg_date={Reg_Date}'
                                     
                                         
@@ -757,7 +785,40 @@ def main():
 
                                 #when found display side by side patient and insurance company invoice
                                 #button to print invoice
-                                
+
+            else : 
+                st.write('Username or password is incorrect')                   
+    if st.sidebar.checkbox('Change Password/Forgot Password'):
+        status=functions.query_db(f'select accstatus from user where username="{username}"')['status'].loc[0]
+        if status=='A':
+            st.write("First time login, please change password and add security question")
+            newpassword=st.text_input("New Password")
+            sec_ques=st.text_input("Security Question")
+            sec_ans=st.text_input("Security Answer")        
+            if st.button("Change"):
+                hashedpwd=functions.make_hashes(newpassword)
+                if hashedpwd==functions.query_db(f'select USERPASSWORD from usertable where USERNAME={username}')['password'].loc[0]:
+                    st.write("New password cannot be the same as old password")
+                else:
+                    functions.insert_query_db(f'update usertable set USERPASSWORD={newpassword}, secQuest={sec_ques}, secans={sec_ans}, status=\'R\' where USERNAME={username}')
+                    st.write("Password changed")
+        if status=='R':
+            st.write("Authorised user,Please enter your security answer")
+            st.write(functions.query_db(f'select secQuest from usertable where USERNAME={username}')['secQuest'].loc[0])
+            sec_ans=st.text_input("Security Answer")
+            if st.button("Change"):
+                if sec_ans==functions.query_db(f'select secans from usertable where USERNAME={username}')['secans'].loc[0]:
+                    newpassword=st.text_input("Enter New Password")
+                    hashedpwd=functions.make_hashes(newpassword)
+                    if hashedpwd==functions.query_db(f'select USERPASSWORD from usertable where USERNAME={username}')['password'].loc[0]:
+                        st.write("New password cannot be the same as old password")
+                    else:
+                        functions.insert_query_db(f'update usertable set USERPASSWORD={newpassword} where USERNAME={username}')
+                        st.write("Password changed")
+                else:
+                    st.write("Security answer is incorrect")
+        else:
+            st.write("User not found, please contact admin")
 
 
 

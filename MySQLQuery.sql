@@ -6,6 +6,9 @@ CREATE TABLE usertable (
     USERNAME VARCHAR(30),
     USERPASSWORD VARCHAR(30),
     USERTYPE VARCHAR(10),
+    secQuest varchar(50),
+    secans  varchar(30),
+    accstatus char(1)
     tbl_last_date DATETIME
     );
     
@@ -26,9 +29,9 @@ CREATE TABLE hospital (
     state         VARCHAR(30),
     zipcode       VARCHAR(30),
     speciality    VARCHAR(30) COMMENT 'Speciality of the hospital(Heart/Cancer/Surgery)',
-    ecchotline    INTEGER(10) COMMENT 'EmergencyHotlineNumber',
-    phoneno       INTEGER(10),
-    adminphone    INTEGER(10),
+    ecchotline    BIGINT COMMENT 'EmergencyHotlineNumber',
+    phoneno       BIGINT,
+    adminphone    BIGINT,
     tbl_last_date DATETIME
 );
 
@@ -36,7 +39,7 @@ CREATE TABLE hospital (
 CREATE TABLE hdepartment (
     did           INTEGER(10) NOT NULL PRIMARY KEY AUTO_INCREMENT, 
     dname         VARCHAR(30) COMMENT 'DepartmentName',
-    phoneno       INTEGER(10),
+    phoneno       BIGINT,
     buildingname  VARCHAR(30),
     floor         VARCHAR(30) COMMENT 'Location of the dept, Floor in the building',
     hid           INTEGER(10) NOT NULL,
@@ -46,7 +49,7 @@ CREATE TABLE hdepartment (
 CREATE TABLE rooms (
     hid           INTEGER(10) NOT NULL,
     roomno        VARCHAR(30) NOT NULL,
-    floor         INTEGER(5),
+    floor         SMALLINT,
     building      VARCHAR(30),
     cost          DECIMAL(6, 2) COMMENT 'CostperNightoftheRoom',
     availability  CHAR(1) COMMENT 'RoomAvailableOrNot',
@@ -65,9 +68,9 @@ CREATE TABLE doctor (
     city            VARCHAR(30),
     state           VARCHAR(30),
     zipcode         VARCHAR(30),
-    officephoneno   INTEGER(10),
-    personalphoneno INTEGER(10),
-    eccno           INTEGER(10) COMMENT 'Emergency call No',
+    officephoneno   BIGINT,
+    personalphoneno BIGINT,
+    eccno           BIGINT COMMENT 'Emergency call No',
     eccname         VARCHAR(30),
     speciality      VARCHAR(30),
     tbl_last_date   DATETIME
@@ -134,7 +137,7 @@ CREATE TABLE patients (
     city           VARCHAR(30),
     state          VARCHAR(30),
     zipcode        VARCHAR(30),
-    phoneno        INTEGER(10),
+    phoneno        BIGINT,
     dob            DATE COMMENT 'DateOfBirth',
     race           VARCHAR(30),
     maritialstatus VARCHAR(30),
@@ -154,7 +157,7 @@ CREATE TABLE emergency_contact (
     city          VARCHAR(30),
     state         VARCHAR(30),
     zipcode       VARCHAR(30),
-    phoneno       INTEGER(10),
+    phoneno       BIGINT,
     relationship  VARCHAR(30) COMMENT 'Relationship to the Patient',
     tbl_last_date DATETIME
 );
@@ -184,7 +187,9 @@ CREATE TABLE inPatient (
     reg_date           DATE NOT NULL,
     dischargedate      DATE NOT NULL,
     roomno       INTEGER(10),
-    hid INTEGER(10)
+    hid INTEGER(10),
+    tbl_last_date DATETIME
+    
 );
 
 ALTER TABLE inPatient ADD CONSTRAINT inPatient_PK PRIMARY KEY ( pid,
@@ -192,7 +197,8 @@ ALTER TABLE inPatient ADD CONSTRAINT inPatient_PK PRIMARY KEY ( pid,
 CREATE TABLE outPatient (
     pid          INTEGER(10) NOT NULL,
     reg_date     DATE NOT NULL,
-    followupdate DATE NOT NULL
+    followupdate DATE NOT NULL,
+    tbl_last_date DATETIME
 );
 
 ALTER TABLE outPatient ADD CONSTRAINT outPatient_PK PRIMARY KEY ( pid,
@@ -306,7 +312,7 @@ ALTER TABLE payment_insurance ADD CONSTRAINT invoice_pk PRIMARY KEY ( invoiceno 
 
 CREATE TABLE payment_patient (
     invoiceno     INTEGER(10) NOT NULL,
-    creditcardno  INTEGER(10),
+    creditcardno  BIGINT,
     cardtype      VARCHAR(30) COMMENT 'Mater/Maestro/Visa',
     tbl_last_date DATETIME
 );
@@ -446,3 +452,6 @@ ALTER TABLE surgery AUTO_INCREMENT=790;
 ALTER TABLE invoice AUTO_INCREMENT=11990000;
 
 select * from usertable;
+
+--set FOREIGN_KEY_CHECKS=1;
+--set FOREIGN_KEY_CHECKS=0;
