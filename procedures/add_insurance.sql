@@ -3,7 +3,7 @@ BEGIN
 case curd
 when 'A' then INSERT INTO insurance_plan(insurancename,insuranceprovider,inPatientCoverage,outPatientCoverage,tbl_last_date) VALUES (in_insurancename,in_insuranceprovider,in_inPatientCoverage,in_outPatientCoverage,sysdate());
 when 'U' then update insurance_plan SET insurancename=in_insurancename ,insuranceprovider=in_insuranceprovider,inPatientCoverage=in_inPatientCoverage,outPatientCoverage=in_outPatientCoverage,tbl_last_date=sysdate() where  planid=in_planid;
-when 'D' then delete from insurance_plan where icdcode=in_icdcodes;
+when 'D' then delete from insurance_plan where planid=in_planid;
 else set result= -1;
 END case; 
 end

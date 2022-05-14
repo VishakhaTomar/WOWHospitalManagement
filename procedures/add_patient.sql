@@ -9,7 +9,7 @@ BEGIN
 			END case;
 	ELSEIF in_type = 'E' then
 			CASE curd
-			when 'A' then INSERT INTO emergency_contact(pid,firstname,lastname,houseno,street,city,state,zipcode,phoneno,relationship,tbl_last_date) VALUES (in_fname,in_lname,in_pthousenum,in_ptstreet,in_ptcity,in_ptstate,in_ptzipcode,in_ptcontact_number,in_ptRace,sysdate());
+			when 'A' then INSERT INTO emergency_contact(pid,firstname,lastname,houseno,street,city,state,zipcode,phoneno,relationship,tbl_last_date) VALUES (in_pid,in_fname,in_lname,in_pthousenum,in_ptstreet,in_ptcity,in_ptstate,in_ptzipcode,in_ptcontact_number,in_ptRace,sysdate());
 			when 'U' then update emergency_contact SET pid=in_pid,firstname=in_fname ,lastname=in_lname,houseno=in_pthousenum ,street=in_ptstreet ,city= in_ptcity,state=in_ptstate,zipcode=in_ptzipcode,phoneno=in_ptcontact_number,relationship=in_ptRace,tbl_last_date=sysdate() where  pid=in_pid;
 			when 'D' then delete from emergency_contact where pid=in_pid;
 			else set result= -1;

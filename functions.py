@@ -55,7 +55,7 @@ def query_db(sql: str):
 
     return df
 
-
+# For procedures
 def insert_query_db(sql: str,arg ):
     print(sql)
     print(arg)
@@ -68,8 +68,6 @@ def insert_query_db(sql: str,arg ):
   # Open a cursor to perform database operations
     cur = mydb.cursor()
 
-    # Open a cursor to perform database operations
-    cur = mydb.cursor()
 
     # Execute a command: this creates a new table
     x=cur.callproc(sql, args=arg)
@@ -84,6 +82,31 @@ def insert_query_db(sql: str,arg ):
     return x
 
 
+# for simple queries
+
+
+def insert_simplequery(sql: str):
+    print(sql)
+    # print(f'Running query_db(): {sql}')
+
+    # Connect to an existing database
+    conn = mysql.connector.connect(user="VishakhaTomar@vishakha", password="zaq1@wsx", 
+                                host="vishakha.mysql.database.azure.com", port=3306, 
+                                database="vishakhadb")
+
+    # Open a cursor to perform database operations
+    cur = conn.cursor()
+
+    # Execute a command: this creates a new table
+    cur.execute(sql)
+
+    # Make the changes to the database persistent
+    conn.commit()
+
+    # Close communication with the database
+    cur.close()
+    conn.close()
+    return
 
 @st.cache
 
@@ -117,10 +140,18 @@ def searchid(table,key):
 
 def searchrecord(sql,table,key,id):
     list=query_db(f'{sql}')
+    record=pd.DataFrame()
     record=query_db(f'Select {key} from {table} where treatmentid={id};')
-    print(record[key][0])
-    temp=list[f'{key}'].tolist()
-    temp.insert(0,record[key][0])
+    if record.empty:
+        record=pd.DataFrame( {key:[' ']})
+        print(record[key][0])
+        temp=list[f'{key}'].tolist()
+        temp.insert(0,record[key][0])
+    else:
+        print(record)
+        temp=list[f'{key}'].tolist()
+        
+
     return temp
 
 def dma(action,id,procedure:str,args):

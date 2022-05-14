@@ -88,113 +88,81 @@ def query_stage(query):
     df = pd.DataFrame(data=data, columns=column_names)
     return df
 
-    
-oltplist= ['hospital','hdepartment','doctor','hospital_doctor','full_time','consulting','rooms','patients','patient_reg','inPatient','outPatient','treatment','p_drug_pres','p_lab','p_surgery','invoice']
-stagelist= ['STG_hospital','STG_hdepartment','STG_doctor','STG_hospital_doctor','STG_full_time','STG_consulting','STG_rooms','STG_patients','STG_patient_reg','STG_inPatient','STG_outPatient','STG_treatment','STG_p_drug_pres','STG_p_lab','STG_p_surgery','STG_invoice']
-
+ 
 # insertstagetable=f'Insert into {stagelist[0]} values (?,?,?,?,?,?,?,?,?,?,?,?)'
+def stage():
+       
+    oltplist= ['hospital','hdepartment','doctor','hospital_doctor','full_time','consulting','rooms','patients','patient_reg','inPatient','outPatient','treatment','p_drug_pres','p_lab','p_surgery','invoice']
+    stagelist= ['STG_hospital','STG_hdepartment','STG_doctor','STG_hospital_doctor','STG_full_time','STG_consulting','STG_rooms','STG_patients','STG_patient_reg','STG_inPatient','STG_outPatient','STG_treatment','STG_p_drug_pres','STG_p_lab','STG_p_surgery','STG_invoice']
 
-if st.button('Backup'):
-    for i,j in zip(oltplist,stagelist):
-        print(i,j)
-        truncatestage=f'TRUNCATE TABLE {i};'
-        result=insert_single(truncatestage,'staging')
-        print(result)
+    if st.button('Backup'):
+        for i,j in zip(oltplist,stagelist):
+            print(i,j)
+            truncatestage=f'TRUNCATE TABLE {i};'
+            result=insert_single(truncatestage,'staging')
+            print(result)
 
-        insertoltptable=functions.query_db(f'select * from {i} where tbl_last_date> (select lastupdatetime from backuptime);')
-        result=insert_multiple_stage(insertoltptable, j)
-        print(result)
+            insertoltptable=functions.query_db(f'select * from {i} where tbl_last_date> (select lastupdatetime from backuptime);')
+            result=insert_multiple_stage(insertoltptable, j)
+            print(result)
 
-    updatetime=functions.insert_query_db(f'update backuptime set lastupdatetime= sysdate() where id =1;')
-    print(updatetime)
+        updatetime=functions.insert_simplequery(f'update backuptime set lastupdatetime= sysdate() where id =1;')
+        st.success('Backup Successful')
+        print(updatetime)
 
-# insertoltptable=functions.query_db(f'select * from hospital_doctor;')
-# result=execute_values(0,insertoltptable, 'STG_hospital_doctor')
-# print(result)
-
-# insertoltptable=functions.query_db(f'select * from inPatient where tbl_last_date< (select lastupdatetime from backuptime);')
-# result=insert_multiple_stage(insertoltptable, 'STG_inPatient')
-# print(result)
-
-# insertoltptable=functions.query_db(f'select * from outPatient where tbl_last_date< (select lastupdatetime from backuptime);')
-# result=insert_multiple_stage(insertoltptable, 'STG_outPatient')
-# print(result)
-
-if st.button('Push to DW'):        
-    hospital_query_ft=query_stage(f'''select d.hid, b.hname,b.city, b.state,b.zipcode,b.speciality,a.did as dptid , a.dname , a.buildingname,a.floor,c.roomno,c.cost,
-                                d.did, e.firstname, e.lastname, e.speciality as docspeciality, d.type as doctype,f.hiredate, f.salary as full_salary
-                                from 
-                                stg_hdepartment a, stg_hospital b,stg_rooms c,stg_hospital_doctor d,stg_doctor e ,stg_full_time f
-                                where 
-                                    a.hid = b.hid and
-                                    c.hid = b.hid and
-                                    d.hid = b.hid and
-                                    f.hid = d.hid and
-                                    e.did= d.did and
-                                    d.did = f.did ''')
-    result1 = insert_multiple_dw(hospital_query_ft, 'dw_hospital')
-    print(result1)
-    hospital_query_con=query_stage(f'''select d.hid,b.city, b.state,b.zipcode,b.speciality,a.did as dptid , a.dname , a.buildingname,a.floor,c.roomno,c.cost,
-                                    d.did, e.firstname, e.lastname, e.speciality as docspeciality, d.type as doctype, g.contractdate, g.contractenddate, g.hours, g.salary as con_salary, g.overtimerate,
-                                    g.shift
-                                    from
-                                    stg_hdepartment a, stg_hospital b,stg_rooms c,stg_hospital_doctor d,stg_doctor e,stg_consulting g
+def dw():
+    if st.button('Push to DW'):        
+        hospital_query_ft=query_stage(f'''select d.hid, b.hname,b.city, b.state,b.zipcode,b.speciality,a.did as dptid , a.dname , a.buildingname,a.floor,c.roomno,c.cost,
+                                    d.did, e.firstname, e.lastname, e.speciality as docspeciality, d.type as doctype,f.hiredate, f.salary as full_salary
+                                    from 
+                                    stg_hdepartment a, stg_hospital b,stg_rooms c,stg_hospital_doctor d,stg_doctor e ,stg_full_time f
                                     where 
                                         a.hid = b.hid and
-                                        c.hid = b.hid and 
-                                        d.hid = b.hid and 
-                                        g.hid = d.hid and 
-                                        e.did = d.did and 
-                                        d.did = g.did  ''')
-    result2 = insert_multiple_dw(hospital_query_con, 'dw_hospital')
-    print(result2)
-    patient_query_in=query_stage(f'''select b.pid,a.firstname,a.lastname,a.city,a.state,a.zipcode,a.dob,a.race, a.maritialstatus, a.gender, a.bloodgroup, a.planid, b.reg_date,b.hid, d.icdcode,b.patient_type,c.dischargedate, c.roomno, d.treatmentid,d.treatmenttype, d.treatmentresult, d.did, e.invoiceno,e.InvoiceDate,e.labcost,e.drugcost, e.surgerycost,e.roomcost, e.totalcost, e.payablebypatient, e.payablebyinsurance
-                                    from 
-                                    stg_patients a, stg_patient_reg b, stg_inpatient c, stg_treatment d, stg_invoice e
-                                    where   b.pid=a.pid and
-                                            b.reg_date=c.reg_date and
-                                            b.pid=c.pid and
-                                            b.pid=d.pid and
-                                            b.reg_date=d.reg_date and
-                                            b.pid=e.pid and
-                                            b.reg_date=e.reg_date''')
-    result3 = insert_multiple_dw(patient_query_in, 'dw_patient')
-    print(result3)
-    patient_query_out=query_stage(f'''select b.pid,a.firstname,a.lastname,a.city,a.state,a.zipcode,a.dob,a.race, a.maritialstatus, a.gender, a.bloodgroup, a.planid, b.reg_date,b.hid, d.icdcode,b.patient_type, d.treatmentid,d.treatmenttype, d.treatmentresult, d.did, e.invoiceno,e.InvoiceDate,e.labcost,e.drugcost, e.surgerycost,e.roomcost, e.totalcost, e.payablebypatient, e.payablebyinsurance
-                                    from 
-                                    stg_patients a, stg_patient_reg b, stg_outpatient c, stg_treatment d, stg_invoice e
-                                    where   b.pid=a.pid and
-                                            b.reg_date=c.reg_date and
-                                            b.pid=c.pid and
-                                            b.pid=d.pid and
-                                            b.reg_date=d.reg_date and
-                                            b.pid=e.pid and
-                                            b.reg_date=e.reg_date''')
-    result4 = insert_multiple_dw(patient_query_out, 'dw_patient')
-    print(result3)
+                                        c.hid = b.hid and
+                                        d.hid = b.hid and
+                                        f.hid = d.hid and
+                                        e.did= d.did and
+                                        d.did = f.did ''')
+        result1 = insert_multiple_dw(hospital_query_ft, 'dw_hospital')
+        print(result1)
+        hospital_query_con=query_stage(f'''select d.hid,b.city, b.state,b.zipcode,b.speciality,a.did as dptid , a.dname , a.buildingname,a.floor,c.roomno,c.cost,
+                                        d.did, e.firstname, e.lastname, e.speciality as docspeciality, d.type as doctype, g.contractdate, g.contractenddate, g.hours, g.salary as con_salary, g.overtimerate,
+                                        g.shift
+                                        from
+                                        stg_hdepartment a, stg_hospital b,stg_rooms c,stg_hospital_doctor d,stg_doctor e,stg_consulting g
+                                        where 
+                                            a.hid = b.hid and
+                                            c.hid = b.hid and 
+                                            d.hid = b.hid and 
+                                            g.hid = d.hid and 
+                                            e.did = d.did and 
+                                            d.did = g.did  ''')
+        result2 = insert_multiple_dw(hospital_query_con, 'dw_hospital')
+        print(result2)
+        patient_query_in=query_stage(f'''select b.pid,a.firstname,a.lastname,a.city,a.state,a.zipcode,a.dob,a.race, a.maritialstatus, a.gender, a.bloodgroup, a.planid, b.reg_date,b.hid, d.icdcode,b.patient_type,c.dischargedate, c.roomno, d.treatmentid,d.treatmenttype, d.treatmentresult, d.did, e.invoiceno,e.InvoiceDate,e.labcost,e.drugcost, e.surgerycost,e.roomcost, e.totalcost, e.payablebypatient, e.payablebyinsurance
+                                        from 
+                                        stg_patients a, stg_patient_reg b, stg_inpatient c, stg_treatment d, stg_invoice e
+                                        where   b.pid=a.pid and
+                                                b.reg_date=c.reg_date and
+                                                b.pid=c.pid and
+                                                b.pid=d.pid and
+                                                b.reg_date=d.reg_date and
+                                                b.pid=e.pid and
+                                                b.reg_date=e.reg_date''')
+        result3 = insert_multiple_dw(patient_query_in, 'dw_patients')
+        print(result3)
+        patient_query_out=query_stage(f'''select b.pid,a.firstname,a.lastname,a.city,a.state,a.zipcode,a.dob,a.race, a.maritialstatus, a.gender, a.bloodgroup, a.planid, b.reg_date,b.hid, d.icdcode,b.patient_type, d.treatmentid,d.treatmenttype, d.treatmentresult, d.did, e.invoiceno,e.InvoiceDate,e.labcost,e.drugcost, e.surgerycost,e.roomcost, e.totalcost, e.payablebypatient, e.payablebyinsurance
+                                        from 
+                                        stg_patients a, stg_patient_reg b, stg_outpatient c, stg_treatment d, stg_invoice e
+                                        where   b.pid=a.pid and
+                                                b.reg_date=c.reg_date and
+                                                b.pid=c.pid and
+                                                b.pid=d.pid and
+                                                b.reg_date=d.reg_date and
+                                                b.pid=e.pid and
+                                                b.reg_date=e.reg_date''')
+        result4 = insert_multiple_dw(patient_query_out, 'dw_patients')
+        print(result3)
 
+        st.write('Push to DW Successful')
 
-patient_query_in=query_stage(f'''select b.pid,a.firstname,a.lastname,a.city,a.state,a.zipcode,a.dob,a.race, a.maritialstatus, a.gender, a.bloodgroup, a.planid, b.reg_date,b.hid, d.icdcode,b.patient_type,c.dischargedate, c.roomno, d.treatmentid,d.treatmenttype, d.treatmentresult, d.did, e.invoiceno,e.InvoiceDate,e.labcost,e.drugcost, e.surgerycost,e.roomcost, e.totalcost, e.payablebypatient, e.payablebyinsurance
-from 
-stg_patients a, stg_patient_reg b, stg_inpatient c, stg_treatment d, stg_invoice e
-where   b.pid=a.pid and
-        b.reg_date=c.reg_date and
-        b.pid=c.pid and
-        b.pid=d.pid and
-        b.reg_date=d.reg_date and
-        b.pid=e.pid and
-        b.reg_date=e.reg_date''')
-result3 = insert_multiple_dw(patient_query_in, 'dw_patients')
-print(result3)
-patient_query_out=query_stage(f'''select b.pid,a.firstname,a.lastname,a.city,a.state,a.zipcode,a.dob,a.race, a.maritialstatus, a.gender, a.bloodgroup, a.planid, b.reg_date,b.hid, d.icdcode,b.patient_type, d.treatmentid,d.treatmenttype, d.treatmentresult, d.did, e.invoiceno,e.InvoiceDate,e.labcost,e.drugcost, e.surgerycost,e.roomcost, e.totalcost, e.payablebypatient, e.payablebyinsurance
-from 
-stg_patients a, stg_patient_reg b, stg_outpatient c, stg_treatment d, stg_invoice e
-where   b.pid=a.pid and
-        b.reg_date=c.reg_date and
-        b.pid=c.pid and
-        b.pid=d.pid and
-        b.reg_date=d.reg_date and
-        b.pid=e.pid and
-        b.reg_date=e.reg_date''')
-result4 = insert_multiple_dw(patient_query_out, 'dw_patients')
-print(result4)
