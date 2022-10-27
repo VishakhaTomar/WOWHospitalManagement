@@ -11,16 +11,7 @@ import base64
 import mysql.connector
 
  
-'''mydb = mysql.connector.connect(user="VishakhaTomar@vishakha", password="zaq1@wsx", 
-                                host="vishakha.mysql.database.azure.com", port=3306, 
-                                database="vishakhadb")
-'''  
 
-'''
-    mydb = mysql.connector.connect(user="root", password="Zaq1@wsx", 
-                                host="127.0.0.1", port=3306, 
-                                database="vishakhadb")
-                                '''
 from streamlit.type_util import OptionSequence
 #import psycopg2
 
@@ -30,9 +21,9 @@ regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w+$'
 def query_db(sql: str):
     print(sql)
     # print(f'Running query_db(): {sql}')
-    mydb = mysql.connector.connect(user="VishakhaTomar@vishakha", password="zaq1@wsx", 
-                                host="vishakha.mysql.database.azure.com", port=3306, 
-                                database="vishakhadb")
+    mydb = mysql.connector.connect(user="mail.id", password="password", 
+                                host="hostname", port=0000, 
+                                database="dbname")
 
   # Open a cursor to perform database operations
     cur = mydb.cursor()
@@ -61,9 +52,9 @@ def insert_query_db(sql: str,arg ):
     print(arg)
     # print(f'Running query_db(): {sql}')
     # print(f'Running query_db(): {sql}')
-    mydb = mysql.connector.connect(user="VishakhaTomar@vishakha", password="zaq1@wsx", 
-                                host="vishakha.mysql.database.azure.com", port=3306, 
-                                database="vishakhadb")
+    mydb = mysql.connector.connect(user="mail.id", password="password", 
+                                host="hostname", port=0000, 
+                                database="dbname")
                                 
   # Open a cursor to perform database operations
     cur = mydb.cursor()
@@ -90,9 +81,9 @@ def insert_simplequery(sql: str):
     # print(f'Running query_db(): {sql}')
 
     # Connect to an existing database
-    conn = mysql.connector.connect(user="VishakhaTomar@vishakha", password="zaq1@wsx", 
-                                host="vishakha.mysql.database.azure.com", port=3306, 
-                                database="vishakhadb")
+    conn = mysql.connector.connect(user="mail.id", password="password", 
+                                host="hostname", port=0000, 
+                                database="dbname")
 
     # Open a cursor to perform database operations
     cur = conn.cursor()
@@ -188,9 +179,9 @@ def dma(action,id,procedure:str,args):
 def query_db_dw(sql: str):
     print(sql)
     # print(f'Running query_db(): {sql}')
-    mydb = mysql.connector.connect(user="VishakhaTomar", password="zaq1@wsx", 
-                                host="vishakhaserverfordw.database.windows.net", port=1433, 
-                                database="Data_warehouse")
+    mydb = mysql.connector.connect(user="mail.id", password="password", 
+                                host="hostname", port=0000, 
+                                database="dbname")
 
   # Open a cursor to perform database operations
     cur = mydb.cursor()
@@ -219,9 +210,9 @@ def insert_query_db_dw(sql: str,arg ):
     print(arg)
     # print(f'Running query_db(): {sql}')
     # print(f'Running query_db(): {sql}')
-    mydb = mysql.connector.connect(user="VishakhaTomar", password="zaq1@wsx", 
-                                host="vishakhaserverfordw.database.windows.net", port=1433, 
-                                database="Data_warehouse")
+    mydb = mysql.connector.connect(user="mail.id", password="password", 
+                                host="hostname", port=0000, 
+                                database="dbname")
                                 
   # Open a cursor to perform database operations
     cur = mydb.cursor()
