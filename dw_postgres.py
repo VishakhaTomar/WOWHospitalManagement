@@ -13,9 +13,9 @@ import functions
 import numpy as np
 import psycopg2.extras as extras
 
-server = 'ap-data-warehouse.postgres.database.azure.com'
-username = 'VishakhaTomar@ap-data-warehouse'
-password = 'Zaq1@wsx'   
+server = 'server.name'
+username = 'dbname'
+password = 'password'   
 print('starting connection')
 def insert_single(insertqery,schema):
     try:
